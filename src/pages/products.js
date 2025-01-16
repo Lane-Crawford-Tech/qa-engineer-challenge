@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { DataGrid } from '@mui/x-data-grid'
 import { useCallback, useEffect, useState } from "react"
+import { CircularProgress, Backdrop } from '@mui/material'
 
 const columns = [
   { field: 'id',
@@ -49,11 +50,32 @@ const columns = [
 
 const ProductPage = () => {
   const [products, setProducts] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [filterValue, setFilterValue] = useState('')
+
+  const getRandomDelay = () => {
+    // return Math.floor(Math.random() * (60000 - 2000 + 1) + 2000)
+    return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
+  }
+
+  const handleFilterModelChange = async (filterState) => {
+    if (filterState.items[0]?.value || filterValue !== '') {  // Check current or previous filter
+      setFilterValue(filterState.items[0]?.value || '')
+      setIsLoading(true)
+      await new Promise(resolve => setTimeout(resolve, getRandomDelay()))
+      setIsLoading(false)
+    }
+  }
+
+  const handleSortModelChange = async (sortState) => {
+    // Trigger for both sort and unsort actions
+    setIsLoading(true)
+    await new Promise(resolve => setTimeout(resolve, getRandomDelay()))
+    setIsLoading(false)
+  }
 
   const loadProducts = useCallback(async () => {
-    const response = await axios.get(`${window.location.origin
-      }/products.json`)
-
+    const response = await axios.get(`${window.location.origin}/products.json`)
     setProducts(response.data)
   })
 
@@ -108,6 +130,17 @@ const ProductPage = () => {
           </ol>
         </div>
       </div>
+
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1
+        }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <div>
         {/*
         <form
@@ -145,11 +178,15 @@ const ProductPage = () => {
           columns={columns}
           pageSizeOptions={[10, 25]}
           initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10 } },
+            pagination: {
+              paginationModel: { pageSize: 10 }
+            },
           }}
           disableSelectionOnClick={true}
           disableColumnSelector={true}
+          onFilterModelChange={handleFilterModelChange}
+          onSortModelChange={handleSortModelChange}
+          loading={false}
         />
       </div>
     </div >
