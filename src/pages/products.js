@@ -54,8 +54,8 @@ const ProductPage = () => {
   const [filterValue, setFilterValue] = useState('')
 
   const getRandomDelay = () => {
-    // return Math.floor(Math.random() * (60000 - 2000 + 1) + 2000)
-    return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
+    return Math.floor(Math.random() * (60000 - 2000 + 1) + 2000)
+    // return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
   }
 
   const handleFilterModelChange = async (filterState) => {
