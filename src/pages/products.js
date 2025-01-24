@@ -106,7 +106,8 @@ const ProductPage = () => {
 
   const getRandomDelay = () => {
     try {
-      return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
+      return Math.floor(Math.random() * (60000 - 2000 + 1) + 2000)
+      //return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
     } catch (error) {
       logger.error('Failed to generate random delay', error);
       return 2000; // fallback delay
