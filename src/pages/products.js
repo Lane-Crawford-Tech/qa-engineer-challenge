@@ -39,12 +39,12 @@ const columns = [
     editable: false,
     resizable: false,
     valueFormatter: (params) => {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'HKD',
-                minimumFractionDigits: 2,
-            }).format(params);
-        }
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'HKD',
+        minimumFractionDigits: 2,
+      }).format(params);
+    }
   },
 ]
 
@@ -105,19 +105,19 @@ const ProductPage = () => {
         </p>
         <table style={{ marginLeft: 30 }}>
           <tbody>
-            {Object.entries({
-              "id": 1100,
-              "categories": ["Category 1", "Category 2"],
-              "name": "Product 100",
-              "image": "https://picsum.photos/400?image=530",
-              "inStock": true,
-              "price": 381
-            }).map(([k, v]) => (
-              <tr key={k}>
-                <td style={{ paddingRight: 15 }}>{k}</td>
-                <td>{Array.isArray(v) ? v.join(', ') : String(v)}</td>
-              </tr>
-            ))}
+          {Object.entries({
+            "id": 1100,
+            "categories": ["Category 1", "Category 2"],
+            "name": "Product 100",
+            "image": "https://picsum.photos/400?image=530",
+            "inStock": true,
+            "price": 381
+          }).map(([k, v]) => (
+            <tr key={k}>
+              <td style={{ paddingRight: 15 }}>{k}</td>
+              <td>{Array.isArray(v) ? v.join(', ') : String(v)}</td>
+            </tr>
+          ))}
           </tbody>
         </table>
 
