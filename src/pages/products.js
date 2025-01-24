@@ -3,8 +3,53 @@ import { DataGrid } from '@mui/x-data-grid'
 import { useCallback, useEffect, useState } from "react"
 import { CircularProgress, Backdrop } from '@mui/material'
 
+// Logger configuration
+const logger = {
+  error: (message, error) => {
+    console.error(`[${new Date().toISOString()}] Error: ${message}`, error);
+    // Log to file system or external service
+    logToFile(`[ERROR] ${message}`, error);
+  },
+  warn: (message) => {
+    console.warn(`[${new Date().toISOString()}] Warning: ${message}`);
+    logToFile(`[WARN] ${message}`);
+  },
+  info: (message) => {
+    console.info(`[${new Date().toISOString()}] Info: ${message}`);
+    logToFile(`[INFO] ${message}`);
+  }
+};
+
+// Helper function to write logs to file
+const logToFile = (message, error = null) => {
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    message,
+    error: error ? {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    } : null
+  };
+
+  // You can implement your file writing logic here
+  // For example, using a backend API endpoint:
+  try {
+    fetch('/api/logs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(logEntry)
+    });
+  } catch (e) {
+    console.error('Failed to write to log file:', e);
+  }
+};
+
 const columns = [
-  { field: 'id',
+  {
+    field: 'id',
     headerName: 'ID',
     width: 150,
     resizable: false
@@ -39,54 +84,114 @@ const columns = [
     editable: false,
     resizable: false,
     valueFormatter: (params) => {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'HKD',
-        minimumFractionDigits: 2,
-      }).format(params);
+      try {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'HKD',
+          minimumFractionDigits: 2,
+        }).format(params);
+      } catch (error) {
+        logger.error('Failed to format price', error);
+        return 'N/A';
+      }
     }
   },
-]
+];
 
 const ProductPage = () => {
   const [products, setProducts] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [filterValue, setFilterValue] = useState('')
+  const [error, setError] = useState(null)
 
   const getRandomDelay = () => {
-    // return Math.floor(Math.random() * (60000 - 2000 + 1) + 2000)
-    return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
+    try {
+      return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
+    } catch (error) {
+      logger.error('Failed to generate random delay', error);
+      return 2000; // fallback delay
+    }
   }
 
   const handleFilterModelChange = async (filterState) => {
-    if (filterState.items[0]?.value || filterValue !== '') {  // Check current or previous filter
-      setFilterValue(filterState.items[0]?.value || '')
-      setIsLoading(true)
-      await new Promise(resolve => setTimeout(resolve, getRandomDelay()))
+    try {
+      logger.info(`Applying filter: ${JSON.stringify(filterState)}`);
+
+      if (filterState.items[0]?.value || filterValue !== '') {
+        setFilterValue(filterState.items[0]?.value || '')
+        setIsLoading(true)
+        await new Promise(resolve => setTimeout(resolve, getRandomDelay()))
+      }
+    } catch (error) {
+      logger.error('Filter operation failed', error)
+      setError('Failed to filter products')
+    } finally {
       setIsLoading(false)
     }
   }
 
   const handleSortModelChange = async (sortState) => {
-    // Trigger for both sort and unsort actions
-    setIsLoading(true)
-    await new Promise(resolve => setTimeout(resolve, getRandomDelay()))
-    setIsLoading(false)
+    try {
+      logger.info(`Applying sort: ${JSON.stringify(sortState)}`);
+
+      setIsLoading(true)
+      await new Promise(resolve => setTimeout(resolve, getRandomDelay()))
+    } catch (error) {
+      logger.error('Sort operation failed', error)
+      setError('Failed to sort products')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const loadProducts = useCallback(async () => {
-    const response = await axios.get(`${window.location.origin}/products.json`)
-    setProducts(response.data)
-  })
+    try {
+      logger.info('Loading products...');
+
+      const response = await axios.get(`${window.location.origin}/products.json`)
+
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid data format received');
+      }
+
+      // Validate product data
+      response.data.forEach((product, index) => {
+        if (!product.id || !product.name || !product.categories) {
+          logger.warn(`Invalid product data at index ${index}`);
+        }
+      });
+
+      setProducts(response.data)
+      logger.info(`Successfully loaded ${response.data.length} products`);
+    } catch (error) {
+      logger.error('Failed to load products', error)
+      setError('Failed to load products')
+    }
+  }, [])
 
   useEffect(() => {
     loadProducts()
-  }, [])
+  }, [loadProducts])
+
+  const handleError = (error) => {
+    logger.error('DataGrid error occurred', error);
+    setError('An error occurred while displaying products');
+  };
 
   return (
     <div>
       <title>Products</title>
-      {/* <h1>Let's Search Something</h1> */}
+      {error && (
+        <div style={{
+          color: 'red',
+          marginBottom: '1rem',
+          padding: '1rem',
+          backgroundColor: '#fee'
+        }}>
+          {error}
+        </div>
+      )}
+
       <div>
         <div>
           <p>In this page, you should be able to view a list of products</p>
@@ -142,35 +247,6 @@ const ProductPage = () => {
       </Backdrop>
 
       <div>
-        {/*
-        <form
-          data-testid='search-form'
-          onSubmit={handleSubmit(loadProducts)}>
-          <div><TextField type='number' placeholder='product ID' /></div>
-          <div>
-            <TextField type='number' placeholder='min price' />
-            <TextField type='number' placeholder='max price' />
-          </div>
-          <div>
-            <TextField
-              value='Category 1'
-              label="Category"
-              select style={{ width: 200 }}>
-              {Array(4).fill(0).map((_, i) => {
-                const categoryVal = `Category ${i + 1}`
-                return <MenuItem
-                  key={categoryVal}
-                  value={categoryVal}>{categoryVal}</MenuItem>
-              })}
-            </TextField>
-          </div>
-          <Button
-            style={{ margin: 20 }}
-            variant="contained"
-            type="submit"
-            color="primary">Search</Button>
-        </form>
-        */}
         <DataGrid
           autoHeight
           style={{ marginTop: 20 }}
@@ -186,10 +262,12 @@ const ProductPage = () => {
           disableColumnSelector={true}
           onFilterModelChange={handleFilterModelChange}
           onSortModelChange={handleSortModelChange}
-          loading={false}
+          loading={isLoading}
+          error={error}
+          onError={handleError}
         />
       </div>
-    </div >
+    </div>
   )
 }
 
