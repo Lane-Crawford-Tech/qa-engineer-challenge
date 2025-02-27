@@ -106,11 +106,10 @@ const ProductPage = () => {
 
   const getRandomDelay = () => {
     try {
-      return Math.floor(Math.random() * (60000 - 2000 + 1) + 2000)
-      //return Math.floor(Math.random() * (6000 - 2000 + 1) + 2000)
+      return Math.floor(Math.random() * (10000 - 5000 + 1) + 5000)
     } catch (error) {
       logger.error('Failed to generate random delay', error);
-      return 2000; // fallback delay
+      return 5000; // fallback delay set to minimum (5 seconds)
     }
   }
 
@@ -236,16 +235,6 @@ const ProductPage = () => {
           </ol>
         </div>
       </div>
-
-      <Backdrop
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1
-        }}
-        open={isLoading}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
 
       <div>
         <DataGrid
